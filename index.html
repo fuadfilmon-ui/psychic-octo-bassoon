@@ -1,0 +1,967 @@
+ሙሉ በሙሉ የተሻሻለው ኮድ እዚህ አለ። የሚከተሉትን ሁሉ ያካትታል፦
+
+✅ አዲስ የተጨመሩ ባህሪያት
+
+1. የተመረጡ አማራጮች አረንጓዴ ቀለም – ምርጫ ሲደረግ አዝራሩ አረንጓዴ ይሆናል
+2. Bet Slip ላይ የተመረጡት ሙሉ ዝርዝር – ሲሊፕ ላይ ክሊክ ሲደረግ ሙሉ ዝርዝር ይታያል
+3. ማጋሪያ ኮድ (Share Code) – እያንዳንዱ ውርርድ ልዩ ኮድ ይወጣል፣ ሌላ ተጫዋች ሊጠቀምበት ይችላል
+4. አዲስ ኦውነር ፓኔል መክፈቻ – በ3 ሰከንድ ውስጥ PROFILE → MENU → WITHDRAW በመንካት
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PRO BETTING - Full Platform</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 10% 20%, #0a2a1a, #010501);
+            font-family: 'Poppins', 'Segoe UI', system-ui;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 85px;
+        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #1a3a1a; }
+        ::-webkit-scrollbar-thumb { background: #ffd700; border-radius: 10px; }
+        
+        .auth-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 30% 20%, #0a2a1a, #010501);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 2000;
+        }
+        .auth-card {
+            background: rgba(20,40,20,0.95); backdrop-filter: blur(15px);
+            border-radius: 60px; padding: 40px 30px; width: 90%; max-width: 420px;
+            border: 1px solid rgba(255,215,0,0.4);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            animation: fadeInUp 0.5s ease;
+        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .brand { font-size: 48px; font-weight: 900; text-align: center; background: linear-gradient(135deg, #ffd700, #ffaa33); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 30px; }
+        .tab-buttons { display: flex; gap: 15px; margin-bottom: 30px; }
+        .tab-btn { flex: 1; padding: 14px; border: none; border-radius: 50px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .tab-btn.active { background: linear-gradient(95deg, #ffd700, #ffaa33); color: #000; box-shadow: 0 5px 15px rgba(255,215,0,0.3); }
+        .tab-btn:not(.active) { background: rgba(30,40,30,0.8); color: #aaa; }
+        .input-field {
+            width: 100%; background: rgba(15,25,15,0.8); border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 50px; padding: 16px 22px; color: white; font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .input-field:focus { outline: none; border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+        .btn-gold {
+            width: 100%; background: linear-gradient(95deg, #ffd700, #ffaa33);
+            border: none; border-radius: 50px; padding: 16px; font-size: 18px;
+            font-weight: bold; color: #000; cursor: pointer;
+        }
+        .bonus-text { background: rgba(46,204,113,0.2); border: 1px solid #2ecc71; border-radius: 30px; padding: 12px; text-align: center; font-size: 13px; margin-bottom: 20px; color: #2ecc71; }
+        .error-msg { color: #ff6b6b; text-align: center; margin-top: 15px; font-size: 13px; }
+        .forgot-link { text-align: right; margin-top: -10px; margin-bottom: 20px; font-size: 12px; cursor: pointer; color: #aaa; }
+        .forgot-link:hover { color: #ffd700; }
+        
+        .main-container { display: none; max-width: 1400px; margin: 0 auto; padding: 15px; }
+        .header {
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(15px);
+            border-radius: 50px; padding: 12px 20px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid rgba(255,215,0,0.3);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .balance-amount { font-size: 28px; font-weight: bold; background: linear-gradient(135deg, #ffd700, #ffaa33); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .user-id { font-family: monospace; background: rgba(0,0,0,0.5); padding: 5px 12px; border-radius: 30px; font-size: 11px; }
+        
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(10,20,10,0.95); backdrop-filter: blur(20px);
+            display: flex; justify-content: space-around; padding: 10px 0 20px;
+            border-top: 1px solid rgba(255,215,0,0.3); z-index: 100;
+        }
+        .nav-item { text-align: center; font-size: 10px; cursor: pointer; transition: color 0.2s; padding: 5px 0; flex: 1; }
+        .nav-item i { font-size: 22px; display: block; margin-bottom: 3px; }
+        .nav-item.active { color: #ffd700; }
+        
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        .league-filter {
+            display: flex; gap: 8px; overflow-x: auto; padding: 8px 0 15px;
+            scrollbar-width: thin;
+        }
+        .league-btn {
+            background: rgba(30,40,30,0.8); backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,215,0,0.3); border-radius: 40px; padding: 6px 18px;
+            cursor: pointer; white-space: nowrap; font-size: 12px;
+        }
+        .league-btn.active { background: linear-gradient(95deg, #ffd700, #ffaa33); color: #000; }
+        
+        .matches-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 15px; margin-bottom: 20px;
+        }
+        .match-card {
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            border-radius: 25px; padding: 15px;
+            border: 1px solid rgba(255,215,0,0.2);
+        }
+        .match-teams { font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 5px; }
+        .match-time { font-size: 10px; text-align: center; color: #ffd700; margin-bottom: 10px; }
+        .match-status { font-size: 9px; text-align: center; padding: 2px 10px; border-radius: 20px; display: inline-block; width: fit-content; margin: 0 auto 10px auto; background: #2ecc71; }
+        
+        .odds-buttons { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+        .odd-btn {
+            background: rgba(30,40,30,0.9); border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 30px; padding: 8px 12px; font-size: 12px; font-weight: bold;
+            cursor: pointer; text-align: center; min-width: 65px;
+            transition: all 0.1s;
+        }
+        .odd-btn.selected { background: #2ecc71; color: #000; border-color: #2ecc71; }
+        .odd-label { font-size: 9px; color: #aaa; }
+        .odd-value { font-size: 14px; color: #ffd700; }
+        .odd-btn.selected .odd-value { color: #000; }
+        
+        .more-markets { margin-top: 10px; border-top: 1px solid rgba(255,215,0,0.2); padding-top: 10px; }
+        .more-markets summary { font-size: 10px; color: #aaa; cursor: pointer; }
+        .markets-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        
+        /* Ticket Panel */
+        .ticket-panel {
+            position: fixed;
+            bottom: 70px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px 25px 0 0;
+            padding: 12px 15px;
+            border-top: 2px solid #ffd700;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            max-height: 60vh;
+            overflow-y: auto;
+            transform: translateY(0);
+        }
+        .ticket-panel.minimized { transform: translateY(calc(100% - 60px)); }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,215,0,0.3);
+            margin-bottom: 10px;
+        }
+        .panel-header h3 { font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .toggle-btn {
+            background: #ffd700; color: #000; border: none; border-radius: 30px;
+            padding: 4px 12px; font-size: 12px; font-weight: bold; cursor: pointer;
+        }
+        .ticket-content { max-height: 350px; overflow-y: auto; }
+        .bet-item {
+            background: rgba(30,40,30,0.8); border-radius: 18px; padding: 10px 12px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center; font-size: 12px;
+        }
+        .bet-item-left { flex: 1; }
+        .bet-remove { background: #e63946; border: none; border-radius: 20px; padding: 4px 12px; cursor: pointer; color: white; font-size: 11px; }
+        .share-code-btn { background: #3498db; border: none; border-radius: 20px; padding: 4px 12px; cursor: pointer; color: white; font-size: 11px; margin-right: 8px; }
+        .total-odds { font-size: 22px; color: #ffd700; font-weight: bold; }
+        .bet-input {
+            display: flex; gap: 10px; margin: 12px 0; align-items: center; flex-wrap: wrap;
+        }
+        .bet-input input {
+            background: rgba(30,40,30,0.8); border: 1px solid rgba(255,215,0,0.4);
+            border-radius: 40px; padding: 10px 15px; width: 130px; color: white; font-size: 16px;
+        }
+        .place-bet-btn {
+            background: linear-gradient(95deg, #ffd700, #ffaa33); color: #000; border: none;
+            border-radius: 40px; padding: 10px 25px; font-size: 16px; font-weight: bold; cursor: pointer;
+        }
+        .potential-win { color: #2ecc71; font-size: 16px; margin-top: 8px; }
+        
+        /* History Screen */
+        .screen-header { margin-bottom: 20px; }
+        .screen-header h2 { color: #ffd700; font-size: 24px; margin-bottom: 15px; }
+        .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .filter-btn {
+            background: rgba(30,40,30,0.8); border: none; border-radius: 30px;
+            padding: 6px 18px; font-size: 12px; cursor: pointer; color: white;
+        }
+        .filter-btn.active { background: #ffd700; color: #000; }
+        .bet-history-card {
+            background: rgba(0,0,0,0.5); border-radius: 25px; padding: 15px; margin-bottom: 12px;
+            border-left: 4px solid #ffd700;
+        }
+        .share-code { background: #2c3e50; padding: 5px 10px; border-radius: 20px; font-family: monospace; font-size: 11px; margin-top: 8px; display: inline-block; }
+        
+        /* Menu Screen */
+        .menu-section { margin-bottom: 20px; }
+        .menu-section h3 { color: #ffd700; margin-bottom: 12px; font-size: 18px; }
+        .leagues-list { max-height: 400px; overflow-y: auto; }
+        .league-item {
+            background: rgba(30,40,30,0.6); border-radius: 20px; padding: 12px 15px;
+            margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between;
+        }
+        .league-item:hover { background: rgba(255,215,0,0.2); }
+        
+        /* Profile Screen */
+        .profile-card {
+            background: rgba(0,0,0,0.5); border-radius: 40px; padding: 25px; text-align: center;
+        }
+        .profile-avatar i { font-size: 80px; color: #ffd700; margin-bottom: 15px; }
+        .profile-info { text-align: left; margin: 20px 0; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,215,0,0.2); }
+        
+        /* Modals */
+        .modal, .admin-panel, .owner-panel {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.96); backdrop-filter: blur(20px);
+            z-index: 5000; overflow-y: auto; display: none; padding: 20px;
+        }
+        .modal-card, .admin-card, .owner-card {
+            background: rgba(20,40,20,0.95); border-radius: 40px; padding: 20px;
+            margin-bottom: 20px; border: 1px solid rgba(255,215,0,0.4);
+        }
+        .share-modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #1e2a1e; border-radius: 30px; padding: 20px; z-index: 6000;
+            text-align: center; display: none; border: 2px solid #ffd700;
+        }
+        .list-scroll { max-height: 280px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 25px; padding: 12px; }
+        .list-item { padding: 10px; border-bottom: 1px solid rgba(255,215,0,0.2); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .cashout-btn { background: #3498db; border: none; border-radius: 25px; padding: 5px 12px; color: white; cursor: pointer; }
+        .loading { text-align: center; padding: 40px; }
+    </style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen" class="auth-container">
+    <div class="auth-card">
+        <div class="brand">⚡ PRO BETTING</div>
+        <div class="tab-buttons">
+            <button id="loginTabBtn" class="tab-btn active">🔐 LOGIN</button>
+            <button id="regTabBtn" class="tab-btn">📝 REGISTER</button>
+        </div>
+        <div id="loginPanel">
+            <input type="number" id="loginPhone" class="input-field" placeholder="Phone Number">
+            <input type="password" id="loginPass" class="input-field" placeholder="Password">
+            <div class="forgot-link" id="forgotBtn">Forgot Password?</div>
+            <button class="btn-gold" id="loginBtn">ENTER GAME</button>
+        </div>
+        <div id="regPanel" style="display:none;">
+            <div class="bonus-text">🎁 New user gets 50 ETB free bonus!</div>
+            <input type="number" id="regPhone" class="input-field" placeholder="Phone Number">
+            <input type="password" id="regPass" class="input-field" placeholder="Password (min 4 chars)">
+            <button class="btn-gold" id="regBtn">REGISTER & GET BONUS</button>
+        </div>
+        <div id="authError" class="error-msg"></div>
+    </div>
+</div>
+
+<!-- MAIN GAME CONTAINER -->
+<div id="gameContainer" class="main-container">
+    <div class="header">
+        <div><div style="font-size: 11px;">💰 BALANCE</div><div class="balance-amount" id="balanceAmount">0.00</div></div>
+        <div class="user-id" id="userId">ID: ---</div>
+    </div>
+    
+    <div id="gameScreen" class="screen active">
+        <div class="league-filter" id="leagueFilter"></div>
+        <div id="matchesContainer"><div class="loading">🔄 Loading matches...</div></div>
+    </div>
+    
+    <div id="historyScreen" class="screen">
+        <div class="screen-header"><h2>📜 BET HISTORY</h2>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">ALL</button>
+                <button class="filter-btn" data-filter="won">WON</button>
+                <button class="filter-btn" data-filter="lost">LOST</button>
+                <button class="filter-btn" data-filter="pending">PENDING</button>
+                <button class="filter-btn" data-filter="cashed_out">CASHED OUT</button>
+            </div>
+        </div>
+        <div id="betHistoryList"></div>
+    </div>
+    
+    <div id="menuScreen" class="screen">
+        <div class="screen-header"><h2>📁 MENU</h2></div>
+        <div class="menu-section"><h3>🌍 TOP LEAGUES</h3><div class="leagues-list" id="leaguesList"></div></div>
+    </div>
+    
+    <div id="profileScreen" class="screen">
+        <div class="screen-header"><h2>👤 PROFILE</h2></div>
+        <div class="profile-card">
+            <div class="profile-avatar"><i class="fas fa-user-circle"></i></div>
+            <div class="profile-info">
+                <div class="info-row"><span>📱 ID:</span><span id="profileId">---</span></div>
+                <div class="info-row"><span>💰 Balance:</span><span id="profileBalance">0.00 ETB</span></div>
+                <div class="info-row"><span>🏆 Total Bets:</span><span id="totalBets">0</span></div>
+                <div class="info-row"><span>🎯 Wins:</span><span id="totalWins">0</span></div>
+                <div class="info-row"><span>📊 Win Rate:</span><span id="winRate">0%</span></div>
+            </div>
+            <button class="btn-gold" id="logoutBtn">🚪 LOGOUT</button>
+        </div>
+    </div>
+    
+    <!-- Ticket Panel -->
+    <div class="ticket-panel" id="ticketPanel">
+        <div class="panel-header" onclick="toggleTicketPanel()">
+            <h3><i class="fas fa-ticket-alt"></i> BET SLIP <span id="ticketMatchesCount">0</span></h3>
+            <button class="toggle-btn" id="toggleTicketBtn">▼</button>
+        </div>
+        <div class="ticket-content" id="ticketContent">
+            <div id="betItems"></div>
+            <div class="bet-input">
+                <input type="number" id="betAmount" placeholder="Amount" value="10" min="10" step="10">
+                <button class="place-bet-btn" id="placeBetBtn">🎲 PLACE BET</button>
+            </div>
+            <div class="potential-win" id="potentialWin"></div>
+        </div>
+    </div>
+    
+    <div class="bottom-nav">
+        <div class="nav-item" data-screen="game"><i class="fas fa-gamepad"></i><span>GAME</span></div>
+        <div class="nav-item" data-screen="history"><i class="fas fa-history"></i><span>HISTORY</span></div>
+        <div class="nav-item" data-screen="menu"><i class="fas fa-bars"></i><span>MENU</span></div>
+        <div class="nav-item" data-screen="profile"><i class="fas fa-user"></i><span>PROFILE</span></div>
+        <div class="nav-item" id="depositNav"><i class="fas fa-coins"></i><span>DEPOSIT</span></div>
+        <div class="nav-item" id="withdrawNav"><i class="fas fa-hand-holding-usd"></i><span>WITHDRAW</span></div>
+    </div>
+</div>
+
+<!-- Deposit/Withdraw Modals -->
+<div id="depositModal" class="modal"><div class="modal-card"><h2>📱 DEPOSIT</h2><p>Send via Telebirr: <strong style="color:#ffd700;">0998012433</strong></p><input type="text" id="depositName" placeholder="Your Name"><input type="number" id="depositAmount" placeholder="Amount"><button class="btn-gold" id="submitDepositBtn">SUBMIT</button><button id="closeDepositBtn" style="margin-top:10px;">CLOSE</button></div></div>
+<div id="withdrawModal" class="modal"><div class="modal-card"><h2>💸 WITHDRAW</h2><input type="number" id="withdrawAmount" placeholder="Amount (min 100)"><input type="text" id="withdrawAccount" placeholder="Telebirr Number"><button class="btn-gold" id="submitWithdrawBtn">SUBMIT</button><button id="closeWithdrawBtn" style="margin-top:10px;">CLOSE</button></div></div>
+
+<!-- Share Code Modal -->
+<div id="shareModal" class="share-modal"><div class="modal-card"><h3>🔗 SHARE BET CODE</h3><input type="text" id="shareCodeInput" readonly style="width:100%; text-align:center; font-size:18px;"><button onclick="copyShareCode()" class="btn-gold" style="margin-top:10px;">📋 COPY CODE</button><button onclick="closeShareModal()" style="margin-top:10px;">CLOSE</button></div></div>
+
+<!-- Admin Panel -->
+<div id="adminPanel" class="admin-panel"><div style="display:flex; justify-content:space-between;"><h2>👑 ADMIN</h2><button id="closeAdminBtn" style="background:#e63946;">CLOSE</button></div>
+<div class="admin-card"><h3>⚡ QUICK RECHARGE</h3><input type="text" id="adminTarget" placeholder="Player Phone"><input type="number" id="adminAmt" placeholder="Amount"><button id="adminRechargeBtn" class="btn-gold">RECHARGE (+)</button><button id="adminDeductBtn" class="btn-gold" style="background:#e63946;">DEDUCT (-)</button></div>
+<div class="admin-card"><h3>📋 REQUESTS</h3><div id="adminDepositsList" class="list-scroll"></div><div id="adminWithdrawsList" class="list-scroll"></div></div>
+<div class="admin-card"><h3>👥 ALL PLAYERS</h3><div id="adminUsersList" class="list-scroll"></div></div></div>
+
+<!-- Owner Panel -->
+<div id="ownerPanel" class="owner-panel"><div style="display:flex; justify-content:space-between;"><h2>👑 OWNER</h2><button id="closeOwnerBtn" style="background:#e63946;">CLOSE</button></div>
+<div class="owner-card"><h3>⚽ MATCH MANAGEMENT</h3><button id="addMatchBtn" class="btn-gold">➕ ADD MATCH</button>
+<button id="bulkImportBtn" class="btn-gold" style="background:#3498db;">📥 IMPORT CSV</button>
+<button id="exportMatchesBtn" class="btn-gold" style="background:#2ecc71;">📤 EXPORT CSV</button></div>
+<div class="owner-card"><h3>🏆 LEAGUE MANAGEMENT</h3><button id="addLeagueBtn" class="btn-gold">➕ ADD LEAGUE</button>
+<div id="leaguesManageList" class="list-scroll"></div></div>
+<div class="owner-card"><h3>💰 ACTIVE BETS & CASH OUT</h3><div id="activeBetsList" class="list-scroll"></div></div>
+<div class="owner-card"><h3>🔐 ADMIN PASSWORD</h3><input type="text" id="newAdminPass" placeholder="New Password"><button id="changeAdminPassBtn" class="btn-gold">CHANGE</button></div>
+<div class="owner-card"><h3>📋 ADMIN LOGS</h3><div id="adminLogsList" class="list-scroll"></div></div></div>
+
+<script>
+// ==================== FIREBASE ====================
+const firebaseConfig = { databaseURL: "https://keno-for-default-rtdb.firebaseio.com/" };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ==================== VARIABLES ====================
+let currentUser = null;
+let currentIp = "";
+let matches = [];
+let betSlip = [];
+let totalOdds = 0;
+let isPanelMinimized = false;
+
+// ==================== TOP LEAGUES ====================
+let topLeagues = [
+    { name: "Premier League", country: "England" }, { name: "La Liga", country: "Spain" },
+    { name: "Serie A", country: "Italy" }, { name: "Bundesliga", country: "Germany" },
+    { name: "Ligue 1", country: "France" }, { name: "MLS", country: "USA" },
+    { name: "Ethiopian Premier League", country: "Ethiopia" }
+];
+
+// ==================== DEFAULT MATCHES ====================
+const defaultMatches = [
+    { id: 1, home: "United", away: "GA United", date: "2026-04-03", time: "17:00", league: "Premier League", status: "upcoming", odds: { home: 2.20, draw: 2.98, away: 4.12, over_2_5: 1.95, under_2_5: 1.85, btts_yes: 1.85, btts_no: 1.95 } },
+    { id: 2, home: "Arsenal", away: "Everton", date: "2026-04-09", time: "17:00", league: "Premier League", status: "upcoming", odds: { home: 1.40, draw: 4.20, away: 7.30, over_2_5: 1.85, under_2_5: 1.95, btts_yes: 1.90, btts_no: 1.90 } },
+    { id: 3, home: "Fuad", away: "Iran", date: "2026-04-03", time: "17:00", league: "Premier League", status: "upcoming", odds: { home: 1.85, draw: 3.40, away: 4.20, over_2_5: 1.90, under_2_5: 1.90, btts_yes: 1.85, btts_no: 1.95 } }
+];
+
+// ==================== LOAD MATCHES ====================
+async function loadMatches() {
+    const snap = await db.ref('matches').once('value');
+    const data = snap.val();
+    if(data && data.length) matches = data;
+    else { matches = defaultMatches; await db.ref('matches').set(defaultMatches); }
+    renderLeagueFilter();
+    renderMatches();
+}
+
+function renderLeagueFilter() {
+    const leagues = [...new Set(matches.map(m => m.league))];
+    const container = document.getElementById('leagueFilter');
+    container.innerHTML = `<button class="league-btn active" data-league="all">ALL LEAGUES</button>`;
+    leagues.forEach(league => {
+        container.innerHTML += `<button class="league-btn" data-league="${league}">${league}</button>`;
+    });
+    document.querySelectorAll('.league-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.league-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderMatches(btn.dataset.league);
+        };
+    });
+}
+
+function renderMatches(leagueFilter = 'all') {
+    const container = document.getElementById('matchesContainer');
+    if(!container) return;
+    let filtered = leagueFilter === 'all' ? matches : matches.filter(m => m.league === leagueFilter);
+    container.innerHTML = '';
+    for(let match of filtered) {
+        const isHomeSelected = betSlip.some(b => b.matchId === match.id && b.market === 'home');
+        const isDrawSelected = betSlip.some(b => b.matchId === match.id && b.market === 'draw');
+        const isAwaySelected = betSlip.some(b => b.matchId === match.id && b.market === 'away');
+        container.innerHTML += `
+            <div class="match-card">
+                <div class="match-teams">${match.home} vs ${match.away}</div>
+                <div class="match-time">🕐 ${match.date} ${match.time}</div>
+                <div class="match-status">📅 UPCOMING</div>
+                <div class="odds-buttons">
+                    <div class="odd-btn ${isHomeSelected ? 'selected' : ''}" onclick="addToBetSlip(${match.id}, 'home', '1 (${match.home})', ${match.odds.home})">
+                        <div class="odd-label">1</div><div class="odd-value">${match.odds.home}</div>
+                    </div>
+                    <div class="odd-btn ${isDrawSelected ? 'selected' : ''}" onclick="addToBetSlip(${match.id}, 'draw', 'X (Draw)', ${match.odds.draw})">
+                        <div class="odd-label">X</div><div class="odd-value">${match.odds.draw}</div>
+                    </div>
+                    <div class="odd-btn ${isAwaySelected ? 'selected' : ''}" onclick="addToBetSlip(${match.id}, 'away', '2 (${match.away})', ${match.odds.away})">
+                        <div class="odd-label">2</div><div class="odd-value">${match.odds.away}</div>
+                    </div>
+                </div>
+                <details class="more-markets">
+                    <summary>+ More Markets</summary>
+                    <div class="markets-grid">
+                        <div class="odd-btn" onclick="addToBetSlip(${match.id}, 'over_2_5', 'Over 2.5', ${match.odds.over_2_5})">
+                            <div>Over 2.5</div><div>${match.odds.over_2_5}</div>
+                        </div>
+                        <div class="odd-btn" onclick="addToBetSlip(${match.id}, 'under_2_5', 'Under 2.5', ${match.odds.under_2_5})">
+                            <div>Under 2.5</div><div>${match.odds.under_2_5}</div>
+                        </div>
+                        <div class="odd-btn" onclick="addToBetSlip(${match.id}, 'btts_yes', 'BTTS Yes', ${match.odds.btts_yes})">
+                            <div>BTTS Yes</div><div>${match.odds.btts_yes}</div>
+                        </div>
+                        <div class="odd-btn" onclick="addToBetSlip(${match.id}, 'btts_no', 'BTTS No', ${match.odds.btts_no})">
+                            <div>BTTS No</div><div>${match.odds.btts_no}</div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        `;
+    }
+}
+
+// ==================== BET SLIP ====================
+function addToBetSlip(matchId, market, selectionName, odds) {
+    const match = matches.find(m => m.id === matchId);
+    if(!match) return;
+    if(betSlip.length >= 35) { alert("Maximum 35 matches!"); return; }
+    const existing = betSlip.findIndex(b => b.matchId === matchId && b.market === market);
+    if(existing !== -1) betSlip.splice(existing, 1);
+    else betSlip.push({ matchId, market, selectionName, odds, matchName: `${match.home} vs ${match.away}` });
+    updateBetSlip();
+}
+
+function removeFromBetSlip(index) { betSlip.splice(index, 1); updateBetSlip(); }
+
+function updateBetSlip() {
+    totalOdds = betSlip.reduce((acc, bet) => acc * parseFloat(bet.odds), 1);
+    document.getElementById('totalOdds').innerText = totalOdds.toFixed(2);
+    document.getElementById('ticketMatchesCount').innerText = betSlip.length;
+    
+    const container = document.getElementById('betItems');
+    if(betSlip.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:15px;">No selections added</div>';
+    } else {
+        container.innerHTML = betSlip.map((bet, idx) => `
+            <div class="bet-item">
+                <div class="bet-item-left">
+                    <div><strong>${bet.matchName}</strong></div>
+                    <div>${bet.selectionName} <strong style="color:#ffd700;">${bet.odds}x</strong></div>
+                </div>
+                <div>
+                    <button class="share-code-btn" onclick="showShareCode(${idx})">🔗 SHARE</button>
+                    <button class="bet-remove" onclick="removeFromBetSlip(${idx})">✖</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Auto-minimize after 2 selections
+    if(betSlip.length >= 2 && !isPanelMinimized) toggleTicketPanel();
+    if(betSlip.length < 2 && isPanelMinimized) toggleTicketPanel();
+    
+    let betAmount = parseFloat(document.getElementById('betAmount').value);
+    if(!isNaN(betAmount) && betAmount >= 10 && totalOdds > 0)
+        document.getElementById('potentialWin').innerHTML = `💰 Potential Win: ${(betAmount * totalOdds).toFixed(2)} ETB`;
+    else document.getElementById('potentialWin').innerHTML = '';
+    renderMatches();
+}
+
+// ==================== SHARE CODE ====================
+function generateShareCode(bet) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
+    let code = '';
+    for(let i=0; i<8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+}
+
+function showShareCode(index) {
+    const bet = betSlip[index];
+    const shareCode = generateShareCode(bet);
+    const modal = document.getElementById('shareModal');
+    document.getElementById('shareCodeInput').value = shareCode;
+    modal.style.display = 'block';
+    
+    // Save to Firebase for sharing
+    db.ref(`share_codes/${shareCode}`).set({
+        selections: betSlip,
+        createdAt: Date.now(),
+        createdBy: currentUser?.id
+    });
+}
+
+function copyShareCode() {
+    const input = document.getElementById('shareCodeInput');
+    input.select();
+    document.execCommand('copy');
+    alert("✅ Code copied!");
+}
+
+function closeShareModal() { document.getElementById('shareModal').style.display = 'none'; }
+
+// ==================== USE SHARE CODE ====================
+async function useShareCode(code) {
+    const snap = await db.ref(`share_codes/${code}`).once('value');
+    const data = snap.val();
+    if(!data) { alert("Invalid share code!"); return false; }
+    betSlip = data.selections;
+    updateBetSlip();
+    alert("✅ Bet loaded from share code!");
+    return true;
+}
+
+// ==================== TICKET PANEL TOGGLE ====================
+function toggleTicketPanel() {
+    const panel = document.getElementById('ticketPanel');
+    const toggleBtn = document.getElementById('toggleTicketBtn');
+    const content = document.getElementById('ticketContent');
+    isPanelMinimized = !isPanelMinimized;
+    if(isPanelMinimized) {
+        panel.classList.add('minimized');
+        toggleBtn.innerHTML = '▲';
+        content.style.display = 'none';
+    } else {
+        panel.classList.remove('minimized');
+        toggleBtn.innerHTML = '▼';
+        content.style.display = 'block';
+    }
+}
+
+// ==================== PLACE BET ====================
+async function placeBet() {
+    if(!currentUser) return;
+    if(betSlip.length === 0) { alert("Select at least one bet!"); return; }
+    let betAmount = parseFloat(document.getElementById('betAmount').value);
+    if(isNaN(betAmount) || betAmount < 10) { alert("Minimum bet is 10 ETB!"); return; }
+    if(currentUser.balance < betAmount) { alert("Insufficient balance!"); return; }
+    await db.ref(`users/${currentUser.id}/balance`).transaction(b => (b||0) - betAmount);
+    currentUser.balance -= betAmount;
+    updateBalanceUI();
+    const betData = {
+        userId: currentUser.id, userName: maskPhone(currentUser.id),
+        betAmount, totalOdds, potentialWin: betAmount * totalOdds,
+        selections: betSlip.map(s => ({ ...s })),
+        timestamp: Date.now(), status: 'pending'
+    };
+    await db.ref('pending_bets').push(betData);
+    alert(`✅ Bet placed! Total Odds: ${totalOdds.toFixed(2)}x`);
+    betSlip = []; updateBetSlip();
+    loadBetHistory();
+}
+
+// ==================== BET HISTORY ====================
+let currentHistoryFilter = 'all';
+function loadBetHistory(filter = currentHistoryFilter) {
+    if(!currentUser) return;
+    currentHistoryFilter = filter;
+    db.ref('pending_bets').once('value', snap => {
+        const bets = snap.val() || {};
+        let userBets = Object.entries(bets).filter(([id, bet]) => bet.userId === currentUser.id);
+        if(filter !== 'all') userBets = userBets.filter(([id, bet]) => bet.status === filter);
+        userBets.sort((a,b) => b[1].timestamp - a[1].timestamp);
+        const container = document.getElementById('betHistoryList');
+        if(userBets.length === 0) { container.innerHTML = '<div class="loading">📭 No bets found</div>'; return; }
+        container.innerHTML = userBets.map(([id, bet]) => {
+            let statusClass = '', statusText = '';
+            if(bet.status === 'won') { statusClass = 'status-won'; statusText = 'WON'; }
+            else if(bet.status === 'lost') { statusClass = 'status-lost'; statusText = 'LOST'; }
+            else if(bet.status === 'cashed_out') { statusClass = 'status-cashed'; statusText = 'CASHED OUT'; }
+            else { statusClass = 'status-pending'; statusText = 'PENDING'; }
+            let selectionsHtml = bet.selections.map(s => `<div>• ${s.matchName} → ${s.selectionName} (${s.odds}x)</div>`).join('');
+            return `<div class="bet-history-card"><div class="bet-header"><span>📅 ${new Date(bet.timestamp).toLocaleString()}</span><span class="${statusClass}">${statusText}</span></div>
+            <div class="bet-amounts"><span>💰 ${bet.betAmount} ETB</span><span>🎯 ${bet.totalOdds.toFixed(2)}x</span><span>🏆 ${bet.potentialWin.toFixed(2)} ETB</span>${bet.cashOutAmount ? `<span>💸 Cashed: ${bet.cashOutAmount} ETB</span>` : ''}</div>
+            <details><summary>📋 Selections (${bet.selections.length})</summary><div>${selectionsHtml}</div></details></div>`;
+        }).join('');
+    });
+}
+
+// ==================== SCREEN NAVIGATION ====================
+function switchScreen(screenName) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(`${screenName}Screen`).classList.add('active');
+    document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
+        item.classList.remove('active');
+        if(item.dataset.screen === screenName) item.classList.add('active');
+    });
+    if(screenName === 'history') loadBetHistory();
+    else if(screenName === 'profile') updateProfileScreen();
+}
+
+function updateProfileScreen() {
+    if(!currentUser) return;
+    document.getElementById('profileId').innerText = maskPhone(currentUser.id);
+    document.getElementById('profileBalance').innerText = currentUser.balance.toFixed(2) + ' ETB';
+    db.ref(`users/${currentUser.id}`).once('value', snap => {
+        const data = snap.val();
+        const totalGames = data.totalGames || 0;
+        const wins = data.wins || 0;
+        document.getElementById('totalBets').innerText = totalGames;
+        document.getElementById('totalWins').innerText = wins;
+        document.getElementById('winRate').innerText = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : '0';
+    });
+}
+
+function renderLeaguesList() {
+    const container = document.getElementById('leaguesList');
+    container.innerHTML = topLeagues.map(l => `<div class="league-item" data-league="${l.name}"><span>⚽ ${l.name}</span><span>${l.country}</span></div>`).join('');
+    document.querySelectorAll('#leaguesList .league-item').forEach(item => {
+        item.onclick = () => {
+            const league = item.getAttribute('data-league');
+            switchScreen('game');
+            const leagueBtn = Array.from(document.querySelectorAll('.league-btn')).find(btn => btn.innerText === league);
+            if(leagueBtn) leagueBtn.click();
+        };
+    });
+}
+
+// ==================== AUTH & UI ====================
+function maskPhone(p) { if(!p) return "09******"; let s=p.toString(); return s.substring(0,2)+"****"+s.substring(s.length-2); }
+function updateBalanceUI() { if(currentUser) { document.getElementById('balanceAmount').innerText = currentUser.balance.toFixed(2); document.getElementById('userId').innerText = `ID: ${maskPhone(currentUser.id)}`; } }
+
+function switchAuth(mode) {
+    document.getElementById('loginPanel').style.display = mode === 'login' ? 'block' : 'none';
+    document.getElementById('regPanel').style.display = mode === 'register' ? 'block' : 'none';
+    document.getElementById('loginTabBtn').className = mode === 'login' ? 'tab-btn active' : 'tab-btn';
+    document.getElementById('regTabBtn').className = mode === 'register' ? 'tab-btn active' : 'tab-btn';
+}
+
+async function handleLogin() {
+    const phone = document.getElementById('loginPhone').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    if(!phone || !pass) { document.getElementById('authError').innerText = "Enter phone and password!"; return; }
+    const snap = await db.ref(`users/${phone}`).once('value');
+    if(!snap.exists()) { document.getElementById('authError').innerText = "User not found!"; return; }
+    const data = snap.val();
+    if(data.password !== pass) { document.getElementById('authError').innerText = "Wrong password!"; return; }
+    currentUser = data;
+    await db.ref(`users/${phone}/ip`).set(currentIp);
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('gameContainer').style.display = 'block';
+    updateBalanceUI();
+    db.ref(`users/${currentUser.id}/balance`).on('value', s => { if(s.exists()){ currentUser.balance = s.val(); updateBalanceUI(); } });
+    await loadMatches();
+    renderLeaguesList();
+    updateProfileScreen();
+}
+
+async function handleRegister() {
+    const phone = document.getElementById('regPhone').value.trim();
+    const pass = document.getElementById('regPass').value;
+    if(phone.length < 9 || pass.length < 3) { document.getElementById('authError').innerText = "Phone (9+) and password (3+) required!"; return; }
+    const ipKey = currentIp.replace(/\./g, '_');
+    const ipCheck = await db.ref(`ip_registry/${ipKey}`).once('value');
+    if(ipCheck.exists()) { document.getElementById('authError').innerText = "Device already registered!"; return; }
+    const existing = await db.ref(`users/${phone}`).once('value');
+    if(existing.exists()) { document.getElementById('authError').innerText = "Phone already registered!"; return; }
+    await db.ref(`users/${phone}`).set({ id:phone, password:pass, balance:50, ip:currentIp, joined:Date.now(), totalGames:0, wins:0, totalBet:0 });
+    await db.ref(`ip_registry/${ipKey}`).set(phone);
+    document.getElementById('authError').innerHTML = "✅ Registered! 50 ETB bonus! Now login";
+    switchAuth('login');
+}
+
+async function showForgotPassword() {
+    const phone = prompt("Enter your phone number:");
+    if(!phone) return;
+    const newPass = prompt("Enter new password:");
+    if(!newPass || newPass.length < 3) return alert("Password must be at least 3 chars");
+    const snap = await db.ref(`users/${phone}`).once('value');
+    if(!snap.exists()) return alert("User not found");
+    await db.ref(`users/${phone}/password`).set(newPass);
+    alert("Password changed!");
+}
+
+// ==================== DEPOSIT/WITHDRAW ====================
+async function submitDeposit() {
+    let name = document.getElementById('depositName').value;
+    let amt = parseFloat(document.getElementById('depositAmount').value);
+    if(!name || !amt) return alert("Fill all fields!");
+    await db.ref('deposit_requests').push({ uid: currentUser.id, name, amount: amt, time: Date.now() });
+    alert("Request sent!"); closeDeposit();
+}
+async function submitWithdraw() {
+    let amt = parseFloat(document.getElementById('withdrawAmount').value);
+    let acc = document.getElementById('withdrawAccount').value;
+    if(amt<100) return alert("Minimum 100 ETB!");
+    if(!acc) return alert("Enter account number!");
+    if(currentUser.balance < amt) return alert("Insufficient balance!");
+    await db.ref(`users/${currentUser.id}/balance`).transaction(b => (b||0)-amt);
+    await db.ref('withdrawals').push({ uid: currentUser.id, amount: amt, account: acc, time: Date.now() });
+    alert("Request sent!"); closeWithdraw();
+}
+function openDeposit(){ document.getElementById('depositModal').style.display='flex'; }
+function closeDeposit(){ document.getElementById('depositModal').style.display='none'; }
+function openWithdraw(){ document.getElementById('withdrawModal').style.display='flex'; }
+function closeWithdraw(){ document.getElementById('withdrawModal').style.display='none'; }
+
+// ==================== ADMIN PANEL ====================
+async function checkAdminPassword(pwd) {
+    const snap = await db.ref('admin_password').once('value');
+    const stored = snap.val();
+    return stored ? pwd === stored : pwd === "fuadiran2129";
+}
+function checkAdmin() {
+    const pwd = prompt("🔐 ADMIN PASSWORD:");
+    if(!pwd) return;
+    checkAdminPassword(pwd).then(v => { if(v){ document.getElementById('adminPanel').style.display='block'; loadAdminData(); } else alert("Wrong password!"); });
+}
+document.body.ondblclick = () => checkAdmin();
+
+async function logAdminAction(adminId, action, target, amount) { await db.ref('admin_logs').push({ adminId, action, target, amount, timestamp: Date.now() }); }
+async function adminRecharge() {
+    let t=document.getElementById('adminTarget').value, a=parseFloat(document.getElementById('adminAmt').value);
+    if(!t||isNaN(a)) return;
+    let snap=await db.ref(`users/${t}`).once('value');
+    if(!snap.exists()) return alert("User not found!");
+    await db.ref(`users/${t}/balance`).transaction(b=>(b||0)+a);
+    await logAdminAction(currentUser?.id||"Unknown","Recharge",t,a);
+    alert(`Recharged ${maskPhone(t)} ${a} ETB!`);
+    if(currentUser && currentUser.id==t) currentUser.balance+=a;
+    loadAdminData();
+}
+async function adminDeduct() {
+    let t=document.getElementById('adminTarget').value, a=parseFloat(document.getElementById('adminAmt').value);
+    if(!t||isNaN(a)) return;
+    let snap=await db.ref(`users/${t}`).once('value');
+    if(!snap.exists()) return alert("User not found!");
+    let cur=snap.val().balance||0;
+    if(cur<a) return alert("Insufficient balance!");
+    await db.ref(`users/${t}/balance`).transaction(b=>(b||0)-a);
+    await logAdminAction(currentUser?.id||"Unknown","Deduct",t,a);
+    alert(`Deducted ${maskPhone(t)} ${a} ETB!`);
+    if(currentUser && currentUser.id==t) currentUser.balance-=a;
+    loadAdminData();
+}
+async function loadAdminData() {
+    let u=await db.ref("users").once('value');
+    let h=''; u.forEach(u=>{ let v=u.val(); h+=`<div class="list-item"><span><b>${maskPhone(v.id)}</b><br><small>Games:${v.totalGames||0} Wins:${v.wins||0}</small></span><span>${(v.balance||0).toFixed(2)} ETB</span></div>`; });
+    document.getElementById('adminUsersList').innerHTML=h;
+    let d=await db.ref("deposit_requests").once('value');
+    let dh=''; d.forEach(d=>{ let v=d.val(); dh+=`<div class="list-item"><div><b>${maskPhone(v.uid)}</b><br>${v.name}<br>${v.amount} ETB</div><button onclick="removeReq('deposit_requests','${d.key}')">✅</button></div>`; });
+    document.getElementById('adminDepositsList').innerHTML=dh||"None";
+    let w=await db.ref("withdrawals").once('value');
+    let wh=''; w.forEach(w=>{ let v=w.val(); wh+=`<div class="list-item"><div><b>${maskPhone(v.uid)}</b><br>${v.account}<br>${v.amount} ETB</div><button onclick="removeReq('withdrawals','${w.key}')">✅</button></div>`; });
+    document.getElementById('adminWithdrawsList').innerHTML=wh||"None";
+}
+window.removeReq = async(ref,key)=>{ await db.ref(`${ref}/${key}`).remove(); loadAdminData(); };
+function closeAdmin(){ document.getElementById('adminPanel').style.display='none'; }
+
+// ==================== OWNER PANEL FUNCTIONS ====================
+function closeOwnerPanel(){ document.getElementById('ownerPanel').style.display='none'; }
+async function loadAdminLogs(){
+    let logs=(await db.ref('admin_logs').once('value')).val()||{};
+    let h='';
+    Object.entries(logs).sort((a,b)=>b[1].timestamp-a[1].timestamp).forEach(([k,l])=>{ h+=`<div class="log-item"><div><span class="log-admin">👤 ${l.adminId}</span> | ${l.action}</div><div>🎯 ${l.target} | 💰 ${l.amount} ETB</div><div>${new Date(l.timestamp).toLocaleString()}</div></div>`; });
+    document.getElementById('adminLogsList').innerHTML=h||"No logs";
+}
+async function changeAdminPassword(){
+    let p=document.getElementById('newAdminPass').value.trim();
+    if(!p||p.length<4) return alert("Password must be at least 4 chars");
+    await db.ref('admin_password').set(p);
+    alert("Admin password changed!");
+}
+function addMatch() {
+    const home = prompt("Home Team:"); const away = prompt("Away Team:");
+    if(!home || !away) return;
+    const league = prompt("League:", "Premier League");
+    const newMatch = { id: matches.length + 1, home, away, date: prompt("Date:", "2026-04-03"), time: prompt("Time:", "17:00"), league: league || "Premier League", status: "upcoming", odds: { home: parseFloat(prompt("Home Odds:", "2.00")), draw: parseFloat(prompt("Draw Odds:", "3.40")), away: parseFloat(prompt("Away Odds:", "3.30")), over_2_5: 1.95, under_2_5: 1.85, btts_yes: 1.85, btts_no: 1.95 } };
+    matches.push(newMatch); db.ref('matches').set(matches);
+    renderLeagueFilter(); renderMatches();
+    alert("✅ Match added!");
+}
+function exportMatchesCSV() {
+    let csv = "Home,Away,Date,Time,League,HomeOdds,DrawOdds,AwayOdds\n";
+    matches.forEach(m => { csv += `"${m.home}","${m.away}",${m.date},${m.time},${m.league},${m.odds.home},${m.odds.draw},${m.odds.away}\n`; });
+    const blob = new Blob([csv], {type: 'text/csv'}); const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob); link.download = 'matches.csv'; link.click();
+}
+function bulkImportCSV() {
+    const input = document.createElement('input'); input.type = 'file'; input.accept = '.csv';
+    input.onchange = async (e) => {
+        const file = e.target.files[0]; const text = await file.text(); const lines = text.split('\n').slice(1);
+        let nextId = matches.length + 1;
+        for(let line of lines) {
+            if(!line.trim()) continue;
+            const parts = line.split(',');
+            if(parts.length < 5) continue;
+            matches.push({ id: nextId++, home: parts[0].replace(/"/g, ''), away: parts[1].replace(/"/g, ''), date: parts[2], time: parts[3], league: parts[4] || "Premier League", status: "upcoming", odds: { home: parseFloat(parts[5]) || 2.00, draw: parseFloat(parts[6]) || 3.40, away: parseFloat(parts[7]) || 3.30, over_2_5: 1.95, under_2_5: 1.85, btts_yes: 1.85, btts_no: 1.95 } });
+        }
+        await db.ref('matches').set(matches);
+        renderLeagueFilter(); renderMatches();
+        alert(`✅ ${lines.length} matches added!`);
+    };
+    input.click();
+}
+function addLeague() {
+    const name = prompt("League Name:"); const country = prompt("Country:");
+    if(!name) return;
+    topLeagues.push({ name, country: country || "Unknown" });
+    renderLeaguesList();
+    renderLeaguesManageList();
+    alert("✅ League added!");
+}
+function deleteLeague(index) {
+    if(confirm("Delete this league?")) { topLeagues.splice(index, 1); renderLeaguesList(); renderLeaguesManageList(); alert("✅ League deleted!"); }
+}
+function renderLeaguesManageList() {
+    const container = document.getElementById('leaguesManageList');
+    container.innerHTML = topLeagues.map((l, idx) => `<div class="list-item"><span><b>${l.name}</b> (${l.country})</span><button onclick="deleteLeague(${idx})" style="background:#e63946;">DELETE</button></div>`).join('');
+}
+function calculateCashOut(bet, match) {
+    if(!match || match.status !== 'live') return 0;
+    return Math.floor(bet.betAmount * bet.totalOdds * 0.65 * 100) / 100;
+}
+async function loadActiveBets() {
+    const snap = await db.ref('pending_bets').once('value');
+    const bets = snap.val() || {};
+    const activeBets = Object.entries(bets).filter(([id, bet]) => bet.status === 'pending');
+    const container = document.getElementById('activeBetsList');
+    if(activeBets.length === 0) { container.innerHTML = '<div class="loading">No active bets</div>'; return; }
+    container.innerHTML = activeBets.map(([id, bet]) => {
+        const match = matches.find(m => m.id === bet.selections[0]?.matchId);
+        const cashOut = calculateCashOut(bet, match);
+        return `<div class="list-item"><div><b>${bet.userName}</b> - ${bet.betAmount} ETB @ ${bet.totalOdds}x<br>💰 Cash Out: ${cashOut} ETB</div><button class="cashout-btn" onclick="offerCashOut('${id}', ${JSON.stringify(bet).replace(/"/g, '&quot;')})">💸 OFFER</button></div>`;
+    }).join('');
+}
+async function offerCashOut(betId, bet) {
+    const match = matches.find(m => m.id === bet.selections[0]?.matchId);
+    const amount = calculateCashOut(bet, match);
+    if(amount <= 0) { alert("Cash out not available"); return; }
+    if(confirm(`Offer ${amount} ETB cash out to ${bet.userName}?`)) {
+        await db.ref(`cash_offers/${bet.userId}/${betId}`).set({ betId, amount, timestamp: Date.now(), expiresAt: Date.now() + 60000, status: 'pending', selections: bet.selections, betAmount: bet.betAmount });
+        alert(`✅ Cash out offer of ${amount} ETB sent`);
+    }
+}
+async function checkCashOffers() {
+    if(!currentUser) return;
+    const snap = await db.ref(`cash_offers/${currentUser.id}`).once('value');
+    const offers = snap.val() || {};
+    for(let [betId, offer] of Object.entries(offers)) {
+        if(offer.status === 'pending' && Date.now() < offer.expiresAt) {
+            if(confirm(`💰 CASH OUT OFFER!\n\nBet: ${offer.selections[0]?.matchName}\nAmount: ${offer.betAmount} ETB\nCash Out: ${offer.amount} ETB\n\nAccept now?`)) {
+                await db.ref(`users/${currentUser.id}/balance`).transaction(b => (b||0) + offer.amount);
+                currentUser.balance += offer.amount;
+                updateBalanceUI();
+                await db.ref(`pending_bets/${betId}`).update({ status: 'cashed_out', cashOutAmount: offer.amount, cashedOutAt: Date.now() });
+                await db.ref(`cash_offers/${currentUser.id}/${betId}`).remove();
+                alert(`✅ Cash out accepted! ${offer.amount} ETB added.`);
+                loadBetHistory();
+            } else {
+                await db.ref(`cash_offers/${currentUser.id}/${betId}`).update({ status: 'declined' });
+            }
+        }
+    }
+}
+setInterval(checkCashOffers, 5000);
+
+// ==================== OWNER PANEL TRIGGER (PROFILE → MENU → WITHDRAW in 3 seconds) ====================
+let ownerSequence = [], ownerTimer = null;
+function onOwnerNavTap(type) {
+    ownerSequence.push(type);
+    if(ownerTimer) clearTimeout(ownerTimer);
+    ownerTimer = setTimeout(() => { ownerSequence = []; }, 3000);
+    if(ownerSequence.length === 3 && ownerSequence[0] === 'PROFILE' && ownerSequence[1] === 'MENU' && ownerSequence[2] === 'WITHDRAW') {
+        const pwd = prompt("👑 OWNER PASSWORD:");
+        if(pwd === "fuadJEMAL567") {
+            document.getElementById('ownerPanel').style.display = 'block';
+            loadAdminLogs(); loadActiveBets(); renderLeaguesManageList();
+        } else alert("Wrong password!");
+        ownerSequence = [];
+    }
+}
+
+// ==================== INIT ====================
+fetch('https://api.ipify.org?format=json').then(r=>r.json()).then(d=>currentIp=d.ip).catch(()=>currentIp="local");
+
+document.getElementById('loginTabBtn').onclick = () => switchAuth('login');
+document.getElementById('regTabBtn').onclick = () => switchAuth('register');
+document.getElementById('loginBtn').onclick = handleLogin;
+document.getElementById('regBtn').onclick = handleRegister;
+document.getElementById('forgotBtn').onclick = showForgotPassword;
+document.getElementById('depositNav').onclick = openDeposit;
+document.getElementById('withdrawNav').onclick = openWithdraw;
+document.querySelectorAll('.nav-item[data-screen]').forEach(item => {
+    item.onclick = () => {
+        switchScreen(item.dataset.screen);
+        if(item.dataset.screen === 'profile') onOwnerNavTap('PROFILE');
+        else if(item.dataset.screen === 'menu') onOwnerNavTap('MENU');
+    };
+});
+document.getElementById('withdrawNav').onclick = () => { openWithdraw(); onOwnerNavTap('WITHDRAW'); };
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.onclick = () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadBetHistory(btn.dataset.filter);
+    };
+});
+document.getElementById('submitDepositBtn').onclick = submitDeposit;
+document.getElementById('closeDepositBtn').onclick = closeDeposit;
+document.getElementById('submitWithdrawBtn').onclick = submitWithdraw;
+document.getElementById('closeWithdrawBtn').onclick = closeWithdraw;
+document.getElementById('closeAdminBtn').onclick = closeAdmin;
+document.getElementById('adminRechargeBtn').onclick = adminRecharge;
+document.getElementById('adminDeductBtn').onclick = adminDeduct;
+document.getElementById('closeOwnerBtn').onclick = closeOwnerPanel;
+document.getElementById('changeAdminPassBtn').onclick = changeAdminPassword;
+document.getElementById('addMatchBtn').onclick = addMatch;
+document.getElementById('bulkImportBtn').onclick = bulkImportCSV;
+document.getElementById('exportMatchesBtn').onclick = exportMatchesCSV;
+document.getElementById('addLeagueBtn').onclick = addLeague;
+document.getElementById('placeBetBtn').onclick = placeBet;
+document.getElementById('betAmount').addEventListener('input', () => updateBetSlip());
+document.getElementById('logoutBtn').onclick = () => { location.reload(); };
+
+window.addToBetSlip = addToBetSlip;
+window.removeFromBetSlip = removeFromBetSlip;
+window.toggleTicketPanel = toggleTicketPanel;
+window.deleteLeague = deleteLeague;
+window.offerCashOut = offerCashOut;
+window.showShareCode = showShareCode;
+window.copyShareCode = copyShareCode;
+window.closeShareModal = closeShareModal;
+</script>
+</body>
+</html>
+```
